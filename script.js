@@ -20,7 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const appContainer = document.getElementById('app-container');
     const loginContainer = document.getElementById('login-container');
-    const signInBtn = document.getElementById('signIn-btn');
+    // --- THIS IS THE CORRECTED LINE ---
+    const signInBtn = document.getElementById('sign-in-btn'); 
+    // ------------------------------------
     const signOutBtn = document.getElementById('sign-out-btn');
     const userProfile = document.getElementById('user-profile');
     const userNameEl = document.getElementById('user-name');
@@ -46,45 +48,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyReportBtn = document.getElementById('copy-report-btn');
 
     let allEntries = [];
-    let unsubscribe; // To stop listening for data when logged out
+    let unsubscribe; 
 
     // --- AUTHENTICATION ---
-    
-    // Listen for Authentication state changes
     auth.onAuthStateChanged(user => {
         if (user) {
-            // User is signed in
             loginContainer.style.display = 'none';
             appContainer.style.display = 'block';
             userProfile.style.display = 'flex';
             userNameEl.textContent = user.displayName || 'User';
-            
-            // Start listening for this user's data
             listenForEntries(user.uid);
-            
         } else {
-            // User is signed out
             loginContainer.style.display = 'flex';
             appContainer.style.display = 'none';
             userProfile.style.display = 'none';
-            
-            // Stop listening for data
             if (unsubscribe) unsubscribe();
             allEntries = [];
-            renderEntries(); // Clear the dashboard
+            renderEntries();
         }
     });
     
-    // Sign In
     signInBtn.addEventListener('click', () => {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).catch(error => {
             console.error("Sign in error:", error);
-            alert("Could not sign in. Please try again.");
+            alert("Could not sign in. Please check your Firebase settings.");
         });
     });
 
-    // Sign Out
     signOutBtn.addEventListener('click', () => {
         auth.signOut();
     });
@@ -141,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function listenForEntries(userId) {
         const entriesCollection = db.collection('workEntries');
         unsubscribe = entriesCollection
-            .where('userId', '==', userId) // <-- SECURITY: Only get entries for the logged-in user
+            .where('userId', '==', userId)
             .orderBy('timestamp', 'desc')
             .onSnapshot(snapshot => {
                 allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -157,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     workForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const user = auth.currentUser;
-        if (!user) { // <-- SECURITY CHECK
+        if (!user) {
             alert("You must be logged in to add an entry.");
             return;
         }
@@ -170,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             await db.collection('workEntries').add({
-                userId: user.uid, // <-- SECURITY: Tag entry with user's ID
+                userId: user.uid,
                 date: entryDateInput.value,
                 party: partyNameInput.value.trim(),
                 work: workDescriptionInput.value.trim(),
