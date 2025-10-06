@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Report Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1>Work Report Pro</h1>
+            <nav>
+                <button id="nav-entry" class="nav-btn active">Add Entry</button>
+                <button id="nav-dashboard" class="nav-btn">Dashboard</button>
+            </nav>
+        </header>
+
+        <main>
+            <div id="entry-page" class="page active">
+                <div class="card form-card">
+                    <h2>Add New Entry</h2>
+                    <form id="work-form">
+                        <div class="form-group">
+                            <label for="entry-date">Select Date:</label>
+                            <input type="date" id="entry-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="party-name">Party Name:</label>
+                            <input type="text" id="party-name" list="party-suggestions" placeholder="Start typing a party name..." autocomplete="off" required>
+                            <datalist id="party-suggestions"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="work-description">Work Description:</label>
+                            <textarea id="work-description" rows="3" placeholder="Enter details of the work..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-text">Add to Report</span>
+                            <span class="loader" style="display: none;"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="dashboard-page" class="page">
+                 <div class="card entries-card">
+                    <div class="filter-header">
+                        <h2>Your Entries</h2>
+                        <div class="filters">
+                            <input type="text" id="search-party" placeholder="Search by name...">
+                            <input type="date" id="search-date">
+                        </div>
+                    </div>
+                    <div id="entries-container" class="entries-container">
+                         </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="report-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close-btn">&times;</button>
+            <h2>Daily Report</h2>
+            <textarea id="report-text" readonly></textarea>
+            <button id="copy-report-btn" class="btn btn-primary">Copy to Clipboard</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>
