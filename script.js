@@ -1,28 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- YOUR FIREBASE CONFIGURATION ---
+    // --- PASTE YOUR NEW FIREBASE CONFIGURATION FROM PART 2 HERE ---
     const firebaseConfig = {
-      apiKey: "AIzaSyDz-H8QiLpwA5llorczIBrCEY_SfsrF5qw",
-      authDomain: "myworkreportapp-6bcf2.firebaseapp.com",
-      projectId: "myworkreportapp-6bcf2",
-      storageBucket: "myworkreportapp-6bcf2.appspot.com",
-      messagingSenderId: "645988529375",
-      appId: "1:645988529375:web:a12d4d8a4615a0f005e56a",
-      measurementId: "G-RRN3BNKERN"
-    };
-    // ------------------------------------
+  apiKey: "AIzaSyDz-H8QiLpwA5llorczIBrCEY_SfsrF5qw",
+  authDomain: "myworkreportapp-6bcf2.firebaseapp.com",
+  projectId: "myworkreportapp-6bcf2",
+  storageBucket: "myworkreportapp-6bcf2.firebasestorage.app",
+  messagingSenderId: "645988529375",
+  appId: "1:645988529375:web:a12d4d8a4615a0f005e56a",
+  measurementId: "G-RRN3BNKERN"
+};
+    // -----------------------------------------------------------
 
     // Initialize Firebase Services
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const entriesCollection = db.collection('workEntries');
+    const auth = firebase.auth();
 
     // DOM Elements
+    const appContainer = document.getElementById('app-container');
+    const loginContainer = document.getElementById('login-container');
+    const signInBtn = document.getElementById('sign-in-btn');
+    const signOutBtn = document.getElementById('sign-out-btn');
+    const userProfile = document.getElementById('user-profile');
+    const userNameEl = document.getElementById('user-name');
     const navEntry = document.getElementById('nav-entry');
     const navDashboard = document.getElementById('nav-dashboard');
     const entryPage = document.getElementById('entry-page');
     const dashboardPage = document.getElementById('dashboard-page');
-    
     const workForm = document.getElementById('work-form');
     const entryDateInput = document.getElementById('entry-date');
     const partyNameInput = document.getElementById('party-name');
@@ -32,25 +37,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchPartyInput = document.getElementById('search-party');
     const searchDateInput = document.getElementById('search-date');
     const submitBtn = workForm.querySelector('button[type="submit"]');
-    
     const reportModal = document.getElementById('report-modal');
     const modalCloseBtn = document.getElementById('modal-close-btn');
     const reportTextarea = document.getElementById('report-text');
     const copyReportBtn = document.getElementById('copy-report-btn');
 
     let allEntries = [];
+    let unsubscribe;
+
+    // --- AUTHENTICATION ---
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            loginContainer.style.display = 'none';
+            appContainer.style.display = 'block';
+            userProfile.style.display = 'flex';
+            userNameEl.textContent = user.displayName || 'User';
+            listenForEntries(user.uid);
+        } else {
+            loginContainer.style.display = 'flex';
+            appContainer.style.display = 'none';
+            userProfile.style.display = 'none';
+            if (unsubscribe) unsubscribe();
+            allEntries = [];
+            renderEntries();
+        }
+    });
+    
+    signInBtn.addEventListener('click', () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(error => console.error("Sign in error:", error));
+    });
+
+    signOutBtn.addEventListener('click', () => auth.signOut());
 
     // --- PAGE NAVIGATION ---
     const showPage = (pageToShow) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if (pageToShow === 'entry') {
-            entryPage.classList.add('active');
-            navEntry.classList.add('active');
-        } else {
-            dashboardPage.classList.add('active');
-            navDashboard.classList.add('active');
-        }
+        if (pageToShow === 'entry') { entryPage.classList.add('active'); navEntry.classList.add('active'); } 
+        else { dashboardPage.classList.add('active'); navDashboard.classList.add('active'); }
     };
     navEntry.addEventListener('click', () => showPage('entry'));
     navDashboard.addEventListener('click', () => showPage('dashboard'));
@@ -59,19 +84,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderEntries = (filteredEntries = allEntries) => {
         entriesContainer.innerHTML = '';
         if (filteredEntries.length === 0) return;
-
         const groupedByDate = filteredEntries.reduce((acc, entry) => {
             if (!acc[entry.date]) acc[entry.date] = [];
             acc[entry.date].push(entry);
             return acc;
         }, {});
-
         const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
         const table = document.createElement('table');
         table.className = 'entries-table';
         table.innerHTML = `<thead><tr><th>Party Name</th><th>Work Description</th><th>Actions</th></tr></thead>`;
         const tbody = document.createElement('tbody');
-
         sortedDates.forEach(date => {
             const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             const dateRow = document.createElement('tr');
@@ -88,28 +110,30 @@ document.addEventListener('DOMContentLoaded', () => {
         entriesContainer.appendChild(table);
     };
 
-    // --- FIREBASE REAL-TIME LISTENER (UNSECURED) ---
-    entriesCollection.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
-        allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        applyFilters();
-        updatePartySuggestions();
-    }, error => {
-        console.error("Error fetching entries: ", error);
-        alert("Could not connect to the database. Check your Firestore Rules.");
-    });
+    // --- FIREBASE REAL-TIME LISTENER (SECURE) ---
+    function listenForEntries(userId) {
+        const entriesCollection = db.collection('workEntries');
+        unsubscribe = entriesCollection.where('userId', '==', userId).orderBy('timestamp', 'desc')
+            .onSnapshot(snapshot => {
+                allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                applyFilters();
+                updatePartySuggestions();
+            }, error => console.error("Error fetching entries: ", error));
+    }
 
-    // --- FORM SUBMISSION (UNSECURED) ---
+    // --- FORM SUBMISSION (SECURE) ---
     workForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const user = auth.currentUser;
+        if (!user) { alert("You must be logged in to add an entry."); return; }
         const btnText = submitBtn.querySelector('.btn-text');
         const loader = submitBtn.querySelector('.loader');
         btnText.style.display = 'none';
         loader.style.display = 'inline-block';
         submitBtn.disabled = true;
-
         try {
-            await entriesCollection.add({
-                // The 'userId' field has been removed
+            await db.collection('workEntries').add({
+                userId: user.uid,
                 date: entryDateInput.value,
                 party: partyNameInput.value.trim(),
                 work: workDescriptionInput.value.trim(),
@@ -120,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showPage('dashboard');
         } catch (error) {
             console.error("Error adding document: ", error);
-            alert("Failed to save entry. Please try again.");
         } finally {
             btnText.style.display = 'inline-block';
             loader.style.display = 'none';
@@ -147,17 +170,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.classList.contains('delete-btn')) {
             const entryId = e.target.dataset.id;
             if (confirm('Are you sure you want to delete this entry?')) {
-                try {
-                    await entriesCollection.doc(entryId).delete();
-                } catch (error) {
-                    console.error("Error deleting entry: ", error);
-                    alert("Could not delete the entry.");
-                }
+                try { await db.collection('workEntries').doc(entryId).delete(); } catch (error) { console.error("Error deleting entry: ", error); }
             }
         }
-        if (e.target.classList.contains('report-btn')) {
-            generateReport(e.target.dataset.date);
-        }
+        if (e.target.classList.contains('report-btn')) { generateReport(e.target.dataset.date); }
     });
 
     const updatePartySuggestions = () => {
@@ -170,9 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const entriesForDate = allEntries.filter(e => e.date === date).sort((a, b) => a.timestamp - b.timestamp);
         const reportDate = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         let reportContent = `${reportDate}\n\n`;
-        entriesForDate.forEach((entry, i) => {
-            reportContent += `${i + 1}. ${entry.party} - ${entry.work}\n`;
-        });
+        entriesForDate.forEach((entry, i) => { reportContent += `${i + 1}. ${entry.party} - ${entry.work}\n`; });
         reportContent += `\nAll done ✅`;
         reportTextarea.value = reportContent;
         reportModal.classList.add('visible');
@@ -188,5 +202,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INITIALIZATION ---
     entryDateInput.value = new Date().toISOString().split('T')[0];
-    showPage('entry');
 });
