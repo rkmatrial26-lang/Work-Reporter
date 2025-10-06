@@ -83,33 +83,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DATA RENDERING ---
     const renderEntries = (filteredEntries = allEntries) => {
-        entriesContainer.innerHTML = '';
-        if (filteredEntries.length === 0) return;
-        const groupedByDate = filteredEntries.reduce((acc, entry) => {
-            if (!acc[entry.date]) acc[entry.date] = [];
-            acc[entry.date].push(entry);
-            return acc;
-        }, {});
-        const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
-        const table = document.createElement('table');
-        table.className = 'entries-table';
-        table.innerHTML = `<thead><tr><th>Party Name</th><th>Work Description</th><th>Actions</th></tr></thead>`;
-        const tbody = document.createElement('tbody');
-        sortedDates.forEach(date => {
-            const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-            const dateRow = document.createElement('tr');
-            dateRow.className = 'date-group-header';
-            dateRow.innerHTML = `<td colspan="3">${formattedDate} <button class="report-btn" data-date="${date}">📋</button></td>`;
-            tbody.appendChild(dateRow);
-            groupedByDate[date].forEach(entry => {
-                const entryRow = document.createElement('tr');
-                entryRow.innerHTML = `<td><strong>${entry.party}</strong></td><td>${entry.work}</td><td><button class="delete-btn" data-id="${entry.id}">❌</button></td>`;
-                tbody.appendChild(entryRow);
-            });
+    entriesContainer.innerHTML = '';
+    if (filteredEntries.length === 0) return;
+
+    const groupedByDate = filteredEntries.reduce((acc, entry) => {
+        if (!acc[entry.date]) acc[entry.date] = [];
+        acc[entry.date].push(entry);
+        return acc;
+    }, {});
+
+    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+    const table = document.createElement('table');
+    table.className = 'entries-table';
+    table.innerHTML = `<thead><tr><th>Party Name</th><th>Work Description</th><th>Actions</th></tr></thead>`;
+    const tbody = document.createElement('tbody');
+
+    sortedDates.forEach(date => {
+        const formattedDate = new Date(date + 'T00:00:00').toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        const dateRow = document.createElement('tr');
+        dateRow.className = 'date-group-header';
+        dateRow.innerHTML = `<td colspan="3">${formattedDate} <button class="report-btn" data-date="${date}">📋</button></td>`;
+        tbody.appendChild(dateRow);
+
+        groupedByDate[date].forEach(entry => {
+            const entryRow = document.createElement('tr');
+            // This is your correct line of code:
+            entryRow.innerHTML = `<td data-label="Party Name"><strong>${entry.party}</strong></td><td data-label="Work Description">${entry.work}</td><td data-label="Actions"><button class="delete-btn" data-id="${entry.id}">❌</button></td>`;
+            tbody.appendChild(entryRow);
         });
-        table.appendChild(tbody);
-        entriesContainer.appendChild(table);
-    };
+    });
+    table.appendChild(tbody);
+    entriesContainer.appendChild(table);
+};
 
     // --- FIREBASE REAL-TIME LISTENER (SECURE) ---
     function listenForEntries(userId) {
