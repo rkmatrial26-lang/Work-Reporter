@@ -11,55 +11,47 @@
 </head>
 <body>
 
-    <div class="app-container">
+    <div class="app-container" id="app-container" style="display: none;">
         <header>
-            <h1>Work Report Pro</h1>
+            <div class="header-top">
+                <h1>Work Report Pro</h1>
+                <div id="user-profile" class="user-profile" style="display: none;">
+                    <span id="user-name"></span>
+                    <button id="sign-out-btn" class="btn-logout">Logout</button>
+                </div>
+            </div>
             <nav>
                 <button id="nav-entry" class="nav-btn active">Add Entry</button>
                 <button id="nav-dashboard" class="nav-btn">Dashboard</button>
             </nav>
         </header>
-
         <main>
             <div id="entry-page" class="page active">
                 <div class="card form-card">
                     <h2>Add New Entry</h2>
                     <form id="work-form">
-                        <div class="form-group">
-                            <label for="entry-date">Select Date:</label>
-                            <input type="date" id="entry-date" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="party-name">Party Name:</label>
-                            <input type="text" id="party-name" list="party-suggestions" placeholder="Start typing a party name..." autocomplete="off" required>
-                            <datalist id="party-suggestions"></datalist>
-                        </div>
-                        <div class="form-group">
-                            <label for="work-description">Work Description:</label>
-                            <textarea id="work-description" rows="3" placeholder="Enter details of the work..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <span class="btn-text">Add to Report</span>
-                            <span class="loader" style="display: none;"></span>
-                        </button>
+                        <div class="form-group"><label for="entry-date">Select Date:</label><input type="date" id="entry-date" required></div>
+                        <div class="form-group"><label for="party-name">Party Name:</label><input type="text" id="party-name" list="party-suggestions" placeholder="Start typing a party name..." autocomplete="off" required><datalist id="party-suggestions"></datalist></div>
+                        <div class="form-group"><label for="work-description">Work Description:</label><textarea id="work-description" rows="3" placeholder="Enter details of the work..." required></textarea></div>
+                        <button type="submit" class="btn btn-primary"><span class="btn-text">Add to Report</span><span class="loader" style="display: none;"></span></button>
                     </form>
                 </div>
             </div>
-
             <div id="dashboard-page" class="page">
                  <div class="card entries-card">
-                    <div class="filter-header">
-                        <h2>Your Entries</h2>
-                        <div class="filters">
-                            <input type="text" id="search-party" placeholder="Search by name...">
-                            <input type="date" id="search-date">
-                        </div>
-                    </div>
-                    <div id="entries-container" class="entries-container">
-                         </div>
+                    <div class="filter-header"><h2>Your Entries</h2><div class="filters"><input type="text" id="search-party" placeholder="Search by name..."><input type="date" id="search-date"></div></div>
+                    <div id="entries-container" class="entries-container"></div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <div id="login-container" class="login-container">
+        <div class="card login-card">
+            <h2>Welcome Back</h2>
+            <p>Please sign in to continue</p>
+            <button id="sign-in-btn" class="btn btn-google"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon"> Sign in with Google</button>
+        </div>
     </div>
 
     <div id="report-modal" class="modal-overlay">
@@ -73,7 +65,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
