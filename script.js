@@ -1,26 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Your verified Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDz-H8QiLpwA5llorczIBrCEY_SfsrF5qw",
       authDomain: "myworkreportapp-6bcf2.firebaseapp.com",
       projectId: "myworkreportapp-6bcf2",
-      storageBucket: "myworkreportapp-6bcf2.appspot.com",
+      storageBucket: "myworkreportapp-6bcf2.firebasestorage.app",
       messagingSenderId: "645988529375",
       appId: "1:645988529375:web:a12d4d8a4615a0f005e56a",
       measurementId: "G-RRN3BNKERN"
     };
 
-    // Initialize Firebase Services
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // DOM Elements
     const appContainer = document.getElementById('app-container');
     const loginContainer = document.getElementById('login-container');
+    const pageTitle = document.getElementById('page-title');
     const signInBtn = document.getElementById('sign-in-btn');
     const signOutBtn = document.getElementById('sign-out-btn');
-    const userProfile = document.getElementById('user-profile');
     const userNameEl = document.getElementById('user-name');
     const navEntry = document.getElementById('nav-entry');
     const navDashboard = document.getElementById('nav-dashboard');
@@ -43,18 +40,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let allEntries = [];
     let unsubscribe;
 
-    // --- AUTHENTICATION ---
     auth.onAuthStateChanged(user => {
         if (user) {
             loginContainer.style.display = 'none';
             appContainer.style.display = 'block';
-            userProfile.style.display = 'flex';
-            userNameEl.textContent = user.displayName || 'User';
+            userNameEl.textContent = user.displayName;
             listenForEntries(user.uid);
         } else {
             loginContainer.style.display = 'flex';
             appContainer.style.display = 'none';
-            userProfile.style.display = 'none';
             if (unsubscribe) unsubscribe();
             allEntries = [];
             renderEntries();
@@ -63,60 +57,60 @@ document.addEventListener('DOMContentLoaded', () => {
     
     signInBtn.addEventListener('click', () => {
         const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(error => {
-            console.error("Sign in error:", error);
-            alert("Sign in failed. Please ensure pop-ups are enabled and you are running on a local server.");
-        });
+        auth.signInWithPopup(provider).catch(error => console.error("Sign in error:", error));
     });
-
     signOutBtn.addEventListener('click', () => auth.signOut());
 
-    // --- PAGE NAVIGATION ---
     const showPage = (pageToShow) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if (pageToShow === 'entry') { entryPage.classList.add('active'); navEntry.classList.add('active'); } 
-        else { dashboardPage.classList.add('active'); navDashboard.classList.add('active'); }
+        if (pageToShow === 'entry') {
+            entryPage.classList.add('active');
+            navEntry.classList.add('active');
+            pageTitle.textContent = "Add Entry";
+        } else {
+            dashboardPage.classList.add('active');
+            navDashboard.classList.add('active');
+            pageTitle.textContent = "Dashboard";
+        }
     };
     navEntry.addEventListener('click', () => showPage('entry'));
     navDashboard.addEventListener('click', () => showPage('dashboard'));
 
-    // --- DATA RENDERING ---
     const renderEntries = (filteredEntries = allEntries) => {
-    entriesContainer.innerHTML = '';
-    if (filteredEntries.length === 0) return;
+        entriesContainer.innerHTML = '';
+        if (filteredEntries.length === 0) return;
 
-    const groupedByDate = filteredEntries.reduce((acc, entry) => {
-        if (!acc[entry.date]) acc[entry.date] = [];
-        acc[entry.date].push(entry);
-        return acc;
-    }, {});
+        const groupedByDate = filteredEntries.reduce((acc, entry) => {
+            if (!acc[entry.date]) acc[entry.date] = [];
+            acc[entry.date].push(entry);
+            return acc;
+        }, {});
 
-    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
-    const table = document.createElement('table');
-    table.className = 'entries-table';
-    table.innerHTML = `<thead><tr><th>Party Name</th><th>Work Description</th><th>Actions</th></tr></thead>`;
-    const tbody = document.createElement('tbody');
-
-    sortedDates.forEach(date => {
-        const formattedDate = new Date(date + 'T00:00:00').toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-        const dateRow = document.createElement('tr');
-        dateRow.className = 'date-group-header';
-        dateRow.innerHTML = `<td colspan="3">${formattedDate} <button class="report-btn" data-date="${date}">📋</button></td>`;
-        tbody.appendChild(dateRow);
-
-        groupedByDate[date].forEach(entry => {
-            const entryRow = document.createElement('tr');
-            // This is your correct line of code:
-            entryRow.innerHTML = `<td data-label="Party Name"><strong>${entry.party}</strong></td><td data-label="Work Description">${entry.work}</td><td data-label="Actions"><button class="delete-btn" data-id="${entry.id}">❌</button></td>`;
-            tbody.appendChild(entryRow);
+        const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+        
+        sortedDates.forEach(date => {
+            const dateGroup = document.createElement('div');
+            dateGroup.className = 'date-group';
+            const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            dateGroup.innerHTML = `<div class="date-header"><span>${formattedDate}</span><button class="report-btn" data-date="${date}">📋</button></div>`;
+            
+            groupedByDate[date].forEach(entry => {
+                const entryCard = document.createElement('div');
+                entryCard.className = 'entry-card';
+                entryCard.innerHTML = `
+                    <div class="entry-details">
+                        <strong>${entry.party}</strong>
+                        <p>${entry.work}</p>
+                    </div>
+                    <button class="delete-btn" data-id="${entry.id}">❌</button>
+                `;
+                dateGroup.appendChild(entryCard);
+            });
+            entriesContainer.appendChild(dateGroup);
         });
-    });
-    table.appendChild(tbody);
-    entriesContainer.appendChild(table);
-};
+    };
 
-    // --- FIREBASE REAL-TIME LISTENER (SECURE) ---
     function listenForEntries(userId) {
         const entriesCollection = db.collection('workEntries');
         unsubscribe = entriesCollection.where('userId', '==', userId).orderBy('timestamp', 'desc')
@@ -127,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, error => console.error("Error fetching entries: ", error));
     }
 
-    // --- FORM SUBMISSION (SECURE) ---
     workForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const user = auth.currentUser;
@@ -139,25 +132,21 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = true;
         try {
             await db.collection('workEntries').add({
-                userId: user.uid,
-                date: entryDateInput.value,
-                party: partyNameInput.value.trim(),
-                work: workDescriptionInput.value.trim(),
+                userId: user.uid, date: entryDateInput.value,
+                party: partyNameInput.value.trim(), work: workDescriptionInput.value.trim(),
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
             workForm.reset();
             entryDateInput.value = new Date().toISOString().split('T')[0];
             showPage('dashboard');
-        } catch (error) {
-            console.error("Error adding document: ", error);
-        } finally {
+        } catch (error) { console.error("Error adding document: ", error); } 
+        finally {
             btnText.style.display = 'inline-block';
             loader.style.display = 'none';
             submitBtn.disabled = false;
         }
     });
 
-    // --- FILTER & SEARCH ---
     const applyFilters = () => {
         const partyQuery = searchPartyInput.value.toLowerCase();
         const dateQuery = searchDateInput.value;
@@ -171,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
     searchPartyInput.addEventListener('input', applyFilters);
     searchDateInput.addEventListener('input', applyFilters);
 
-    // --- DELETE & REPORT ---
     entriesContainer.addEventListener('click', async (e) => {
         if (e.target.classList.contains('delete-btn')) {
             const entryId = e.target.dataset.id;
@@ -187,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
         partySuggestions.innerHTML = uniqueParties.map(p => `<option value="${p}"></option>`).join('');
     };
 
-    // --- MODAL & COPY LOGIC ---
     const generateReport = (date) => {
         const entriesForDate = allEntries.filter(e => e.date === date).sort((a, b) => a.timestamp - b.timestamp);
         const reportDate = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -206,6 +193,5 @@ document.addEventListener('DOMContentLoaded', () => {
     modalCloseBtn.addEventListener('click', () => reportModal.classList.remove('visible'));
     reportModal.addEventListener('click', (e) => { if (e.target === reportModal) reportModal.classList.remove('visible'); });
 
-    // --- INITIALIZATION ---
     entryDateInput.value = new Date().toISOString().split('T')[0];
 });
