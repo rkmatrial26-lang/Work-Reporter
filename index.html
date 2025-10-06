@@ -11,9 +11,15 @@
 </head>
 <body>
 
-    <div class="app-container">
+    <div class="app-container" id="app-container" style="display: none;">
         <header>
-            <h1>Work Report Pro</h1>
+            <div class="header-top">
+                <h1>Work Report Pro</h1>
+                <div id="user-profile" class="user-profile" style="display: none;">
+                    <span id="user-name"></span>
+                    <button id="sign-out-btn" class="btn-logout">Logout</button>
+                </div>
+            </div>
             <nav>
                 <button id="nav-entry" class="nav-btn active">Add Entry</button>
                 <button id="nav-dashboard" class="nav-btn">Dashboard</button>
@@ -62,6 +68,18 @@
         </main>
     </div>
 
+    <div id="login-container" class="login-container">
+        <div class="card login-card">
+            <h2>Welcome Back</h2>
+            <p>Please sign in to continue</p>
+            <button id="sign-in-btn" class="btn btn-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
+
     <div id="report-modal" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close" id="modal-close-btn">&times;</button>
@@ -73,6 +91,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     
     <script src="script.js"></script>
 </body>
