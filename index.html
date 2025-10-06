@@ -10,18 +10,66 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+
+    <div id="login-container" class="login-container">
+        <div class="card login-card">
+            <h2>Work Report Pro</h2>
+            <p>Please sign in to continue</p>
+            <button id="sign-in-btn" class="btn btn-google">
+                <svg aria-hidden="true" class="native svg-icon" width="18" height="18" viewBox="0 0 18 18"><path d="M16.51 8.25H9v1.5h7.51c-.1 1.25-.5 2.25-1.2 3-.7.7-1.7 1.25-3.3 1.25-2.8 0-5.1-2.3-5.1-5.1s2.3-5.1 5.1-5.1c1.5 0 2.7.6 3.5 1.4l1.1-1.1c-1.3-1.2-3-2-5.7-2-4.7 0-8.5 3.8-8.5 8.5s3.8 8.5 8.5 8.5c2.6 0 4.7-1 6.2-2.5 1.5-1.6 2-3.8 2-6.2 0-.6-.1-1.1-.2-1.6z" fill="#4285F4"></path></svg>
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
     <div class="app-container" id="app-container" style="display: none;">
         <header>
-            <div class="header-top"><h1>Work Report Pro</h1><div id="user-profile" class="user-profile" style="display: none;"><span id="user-name"></span><button id="sign-out-btn" class="btn-logout">Logout</button></div></div>
-            <nav><button id="nav-entry" class="nav-btn active">Add Entry</button><button id="nav-dashboard" class="nav-btn">Dashboard</button></nav>
+            <div class="header-top">
+                <h1 id="page-title">Add Entry</h1>
+                <div id="user-profile" class="user-profile">
+                    <span id="user-name"></span>
+                    <button id="sign-out-btn" class="btn-logout">Logout</button>
+                </div>
+            </div>
         </header>
+
         <main>
-            <div id="entry-page" class="page active"><div class="card form-card"><h2>Add New Entry</h2><form id="work-form"><div class="form-group"><label for="entry-date">Select Date:</label><input type="date" id="entry-date" required></div><div class="form-group"><label for="party-name">Party Name:</label><input type="text" id="party-name" list="party-suggestions" placeholder="Start typing a party name..." autocomplete="off" required><datalist id="party-suggestions"></datalist></div><div class="form-group"><label for="work-description">Work Description:</label><textarea id="work-description" rows="3" placeholder="Enter details of the work..." required></textarea></div><button type="submit" class="btn btn-primary"><span class="btn-text">Add to Report</span><span class="loader" style="display: none;"></span></button></form></div></div>
-            <div id="dashboard-page" class="page"><div class="card entries-card"><div class="filter-header"><h2>Your Entries</h2><div class="filters"><input type="text" id="search-party" placeholder="Search by name..."><input type="date" id="search-date"></div></div><div id="entries-container" class="entries-container"></div></div></div>
+            <div id="entry-page" class="page active">
+                <div class="card form-card">
+                    <form id="work-form">
+                        <div class="form-group"><label for="entry-date">Select Date:</label><input type="date" id="entry-date" required></div>
+                        <div class="form-group"><label for="party-name">Party Name:</label><input type="text" id="party-name" list="party-suggestions" placeholder="Start typing..." autocomplete="off" required><datalist id="party-suggestions"></datalist></div>
+                        <div class="form-group"><label for="work-description">Work Description:</label><textarea id="work-description" rows="3" placeholder="Enter details..." required></textarea></div>
+                        <button type="submit" class="btn btn-primary"><span class="btn-text">Add to Report</span><span class="loader" style="display: none;"></span></button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="dashboard-page" class="page">
+                 <div class="card entries-card">
+                    <div class="filters">
+                        <input type="text" id="search-party" placeholder="Search by name...">
+                        <input type="date" id="search-date">
+                    </div>
+                    <div id="entries-container" class="entries-container"></div>
+                </div>
+            </div>
         </main>
+
+        <nav class="bottom-nav">
+            <button id="nav-entry" class="nav-btn active">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                <span>Add Entry</span>
+            </button>
+            <button id="nav-dashboard" class="nav-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                <span>Dashboard</span>
+            </button>
+        </nav>
     </div>
-    <div id="login-container" class="login-container"><div class="card login-card"><h2>Welcome Back</h2><p>Please sign in to continue</p><button id="sign-in-btn" class="btn btn-google"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon"> Sign in with Google</button></div></div>
+
     <div id="report-modal" class="modal-overlay"><div class="modal-content"><button class="modal-close" id="modal-close-btn">&times;</button><h2>Daily Report</h2><textarea id="report-text" readonly></textarea><button id="copy-report-btn" class="btn btn-primary">Copy to Clipboard</button></div></div>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
