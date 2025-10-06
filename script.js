@@ -1,16 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-    // --- PASTE YOUR NEW FIREBASE CONFIGURATION FROM PART 2 HERE ---
+    // Your verified Firebase configuration
     const firebaseConfig = {
-  apiKey: "AIzaSyDz-H8QiLpwA5llorczIBrCEY_SfsrF5qw",
-  authDomain: "myworkreportapp-6bcf2.firebaseapp.com",
-  projectId: "myworkreportapp-6bcf2",
-  storageBucket: "myworkreportapp-6bcf2.firebasestorage.app",
-  messagingSenderId: "645988529375",
-  appId: "1:645988529375:web:a12d4d8a4615a0f005e56a",
-  measurementId: "G-RRN3BNKERN"
-};
-    // -----------------------------------------------------------
+      apiKey: "AIzaSyDz-H8QiLpwA5llorczIBrCEY_SfsrF5qw",
+      authDomain: "myworkreportapp-6bcf2.firebaseapp.com",
+      projectId: "myworkreportapp-6bcf2",
+      storageBucket: "myworkreportapp-6bcf2.appspot.com",
+      messagingSenderId: "645988529375",
+      appId: "1:645988529375:web:a12d4d8a4615a0f005e56a",
+      measurementId: "G-RRN3BNKERN"
+    };
 
     // Initialize Firebase Services
     firebase.initializeApp(firebaseConfig);
@@ -65,7 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     signInBtn.addEventListener('click', () => {
         const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(error => console.error("Sign in error:", error));
+        auth.signInWithPopup(provider).catch(error => {
+            console.error("Sign in error:", error);
+            alert("Sign in failed. Please ensure pop-ups are enabled and you are running on a local server.");
+        });
     });
 
     signOutBtn.addEventListener('click', () => auth.signOut());
