@@ -15,18 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Firebase Services
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const auth = firebase.auth();
+    const entriesCollection = db.collection('workEntries');
 
     // DOM Elements
-    const appContainer = document.getElementById('app-container');
-    const loginContainer = document.getElementById('login-container');
-    // --- THIS IS THE CORRECTED LINE ---
-    const signInBtn = document.getElementById('sign-in-btn'); 
-    // ------------------------------------
-    const signOutBtn = document.getElementById('sign-out-btn');
-    const userProfile = document.getElementById('user-profile');
-    const userNameEl = document.getElementById('user-name');
-    
     const navEntry = document.getElementById('nav-entry');
     const navDashboard = document.getElementById('nav-dashboard');
     const entryPage = document.getElementById('entry-page');
@@ -48,37 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyReportBtn = document.getElementById('copy-report-btn');
 
     let allEntries = [];
-    let unsubscribe; 
-
-    // --- AUTHENTICATION ---
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            loginContainer.style.display = 'none';
-            appContainer.style.display = 'block';
-            userProfile.style.display = 'flex';
-            userNameEl.textContent = user.displayName || 'User';
-            listenForEntries(user.uid);
-        } else {
-            loginContainer.style.display = 'flex';
-            appContainer.style.display = 'none';
-            userProfile.style.display = 'none';
-            if (unsubscribe) unsubscribe();
-            allEntries = [];
-            renderEntries();
-        }
-    });
-    
-    signInBtn.addEventListener('click', () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(error => {
-            console.error("Sign in error:", error);
-            alert("Could not sign in. Please check your Firebase settings.");
-        });
-    });
-
-    signOutBtn.addEventListener('click', () => {
-        auth.signOut();
-    });
 
     // --- PAGE NAVIGATION ---
     const showPage = (pageToShow) => {
@@ -128,31 +88,19 @@ document.addEventListener('DOMContentLoaded', () => {
         entriesContainer.appendChild(table);
     };
 
-    // --- FIREBASE REAL-TIME LISTENER (SECURE) ---
-    function listenForEntries(userId) {
-        const entriesCollection = db.collection('workEntries');
-        unsubscribe = entriesCollection
-            .where('userId', '==', userId)
-            .orderBy('timestamp', 'desc')
-            .onSnapshot(snapshot => {
-                allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                applyFilters();
-                updatePartySuggestions();
-            }, error => {
-                console.error("Error fetching entries: ", error);
-                alert("Could not connect to the database.");
-            });
-    }
+    // --- FIREBASE REAL-TIME LISTENER (UNSECURED) ---
+    entriesCollection.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+        allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        applyFilters();
+        updatePartySuggestions();
+    }, error => {
+        console.error("Error fetching entries: ", error);
+        alert("Could not connect to the database. Check your Firestore Rules.");
+    });
 
-    // --- FORM SUBMISSION (SECURE) ---
+    // --- FORM SUBMISSION (UNSECURED) ---
     workForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const user = auth.currentUser;
-        if (!user) {
-            alert("You must be logged in to add an entry.");
-            return;
-        }
-
         const btnText = submitBtn.querySelector('.btn-text');
         const loader = submitBtn.querySelector('.loader');
         btnText.style.display = 'none';
@@ -160,8 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = true;
 
         try {
-            await db.collection('workEntries').add({
-                userId: user.uid,
+            await entriesCollection.add({
+                // The 'userId' field has been removed
                 date: entryDateInput.value,
                 party: partyNameInput.value.trim(),
                 work: workDescriptionInput.value.trim(),
@@ -194,13 +142,13 @@ document.addEventListener('DOMContentLoaded', () => {
     searchPartyInput.addEventListener('input', applyFilters);
     searchDateInput.addEventListener('input', applyFilters);
 
-    // --- DELETE & REPORT (EVENT DELEGATION) ---
+    // --- DELETE & REPORT ---
     entriesContainer.addEventListener('click', async (e) => {
         if (e.target.classList.contains('delete-btn')) {
             const entryId = e.target.dataset.id;
             if (confirm('Are you sure you want to delete this entry?')) {
                 try {
-                    await db.collection('workEntries').doc(entryId).delete();
+                    await entriesCollection.doc(entryId).delete();
                 } catch (error) {
                     console.error("Error deleting entry: ", error);
                     alert("Could not delete the entry.");
@@ -240,4 +188,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INITIALIZATION ---
     entryDateInput.value = new Date().toISOString().split('T')[0];
+    showPage('entry');
 });
