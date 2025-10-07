@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageTitle = document.getElementById('page-title');
     const signInBtn = document.getElementById('sign-in-btn');
     const signOutBtn = document.getElementById('sign-out-btn');
-    const userNameEl = document.getElementById('user-name');
     const navEntry = document.getElementById('nav-entry');
     const navDashboard = document.getElementById('nav-dashboard');
     const entryPage = document.getElementById('entry-page');
@@ -27,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const entryDateInput = document.getElementById('entry-date');
     const partyNameInput = document.getElementById('party-name');
     const workDescriptionInput = document.getElementById('work-description');
-    const partySuggestions = document.getElementById('party-suggestions');
     const entriesContainer = document.getElementById('entries-container');
     const searchPartyInput = document.getElementById('search-party');
     const searchDateInput = document.getElementById('search-date');
@@ -36,6 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCloseBtn = document.getElementById('modal-close-btn');
     const reportTextarea = document.getElementById('report-text');
     const copyReportBtn = document.getElementById('copy-report-btn');
+    
+    // NEW: User menu elements
+    const userMenuBtn = document.getElementById('user-menu-btn');
+    const userMenuDropdown = document.getElementById('user-menu-dropdown');
+    const userNameDropdown = document.getElementById('user-name-dropdown');
 
     let allEntries = [];
     let unsubscribe;
@@ -43,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(user => {
         if (user) {
             loginContainer.style.display = 'none';
-            appContainer.style.display = 'flex'; // Changed to flex to enable layout
-            userNameEl.textContent = user.displayName;
+            appContainer.style.display = 'flex';
+            userNameDropdown.textContent = user.displayName; // Set name in dropdown
             listenForEntries(user.uid);
         } else {
             loginContainer.style.display = 'flex';
@@ -60,6 +63,18 @@ document.addEventListener('DOMContentLoaded', () => {
         auth.signInWithPopup(provider).catch(error => console.error("Sign in error:", error));
     });
     signOutBtn.addEventListener('click', () => auth.signOut());
+
+    // NEW: Logic to toggle user menu
+    userMenuBtn.addEventListener('click', () => {
+        userMenuDropdown.classList.toggle('visible');
+    });
+
+    // NEW: Logic to close user menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!userMenuBtn.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+            userMenuDropdown.classList.remove('visible');
+        }
+    });
 
     const showPage = (pageToShow) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -93,17 +108,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateGroup = document.createElement('div');
             dateGroup.className = 'date-group';
             const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-            dateGroup.innerHTML = `<div class="date-header"><span>${formattedDate}</span><button class="report-btn" data-date="${date}">📋</button></div>`;
+            // NEW: Clipboard SVG icon
+            const reportIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>`;
+            dateGroup.innerHTML = `<div class="date-header"><span>${formattedDate}</span><button class="report-btn" data-date="${date}">${reportIconSVG}</button></div>`;
             
             groupedByDate[date].forEach(entry => {
                 const entryCard = document.createElement('div');
                 entryCard.className = 'entry-card';
+                // NEW: Trash SVG icon
+                const deleteIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
                 entryCard.innerHTML = `
                     <div class="entry-details">
                         <strong>${entry.party}</strong>
                         <p>${entry.work}</p>
                     </div>
-                    <button class="delete-btn" data-id="${entry.id}">❌</button>
+                    <button class="delete-btn" data-id="${entry.id}">${deleteIconSVG}</button>
                 `;
                 dateGroup.appendChild(entryCard);
             });
@@ -161,21 +180,24 @@ document.addEventListener('DOMContentLoaded', () => {
     searchDateInput.addEventListener('input', applyFilters);
 
     entriesContainer.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('delete-btn')) {
-            const entryId = e.target.dataset.id;
+        const deleteBtn = e.target.closest('.delete-btn');
+        const reportBtn = e.target.closest('.report-btn');
+
+        if (deleteBtn) {
+            const entryId = deleteBtn.dataset.id;
             if (confirm('Are you sure you want to delete this entry?')) {
                 try { await db.collection('workEntries').doc(entryId).delete(); } catch (error) { console.error("Error deleting entry: ", error); }
             }
         }
-        if (e.target.classList.contains('report-btn') || e.target.parentElement.classList.contains('report-btn')) {
-             const button = e.target.closest('.report-btn');
-             generateReport(button.dataset.date);
+        if (reportBtn) { 
+            generateReport(reportBtn.dataset.date); 
         }
     });
 
     const updatePartySuggestions = () => {
         const uniqueParties = [...new Set(allEntries.map(entry => entry.party))];
-        partySuggestions.innerHTML = uniqueParties.map(p => `<option value="${p}"></option>`).join('');
+        const partyDatalist = document.getElementById('party-suggestions');
+        partyDatalist.innerHTML = uniqueParties.map(p => `<option value="${p}"></option>`).join('');
     };
 
     const generateReport = (date) => {
@@ -197,5 +219,5 @@ document.addEventListener('DOMContentLoaded', () => {
     reportModal.addEventListener('click', (e) => { if (e.target === reportModal) reportModal.classList.remove('visible'); });
 
     entryDateInput.value = new Date().toISOString().split('T')[0];
-    showPage('entry'); // Start on the entry page
+    showPage('entry');
 });
