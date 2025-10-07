@@ -27,8 +27,16 @@
             <div class="header-top">
                 <h1 id="page-title">Add Entry</h1>
                 <div id="user-profile" class="user-profile">
-                    <span id="user-name"></span>
-                    <button id="sign-out-btn" class="btn-logout">Logout</button>
+                    <button id="user-menu-btn" class="user-menu-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </button>
+                    <div id="user-menu-dropdown" class="user-menu-dropdown">
+                        <div id="user-name-dropdown" class="user-name-dropdown"></div>
+                        <button id="sign-out-btn" class="btn-logout">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Logout</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -61,9 +69,16 @@
             <div id="dashboard-page" class="page">
                  <div class="card entries-card">
                     <div class="filters">
-                        <input type="text" id="search-party" placeholder="Search by name...">
-                        <input type="date" id="search-date">
+                         <div class="form-group">
+                            <label for="search-party">Search by Party Name:</label>
+                            <input type="text" id="search-party" placeholder="Enter name...">
+                        </div>
+                        <div class="form-group">
+                            <label for="search-date">Filter by Date:</label>
+                            <input type="date" id="search-date">
+                        </div>
                     </div>
+                    <h3 class="entries-heading">Recent Entries</h3>
                     <div id="entries-container" class="entries-container"></div>
                 </div>
             </div>
