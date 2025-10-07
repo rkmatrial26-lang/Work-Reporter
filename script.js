@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(user => {
         if (user) {
             loginContainer.style.display = 'none';
-            appContainer.style.display = 'block';
+            appContainer.style.display = 'flex'; // Changed to flex to enable layout
             userNameEl.textContent = user.displayName;
             listenForEntries(user.uid);
         } else {
@@ -167,7 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 try { await db.collection('workEntries').doc(entryId).delete(); } catch (error) { console.error("Error deleting entry: ", error); }
             }
         }
-        if (e.target.classList.contains('report-btn')) { generateReport(e.target.dataset.date); }
+        if (e.target.classList.contains('report-btn') || e.target.parentElement.classList.contains('report-btn')) {
+             const button = e.target.closest('.report-btn');
+             generateReport(button.dataset.date);
+        }
     });
 
     const updatePartySuggestions = () => {
@@ -176,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const generateReport = (date) => {
-        const entriesForDate = allEntries.filter(e => e.date === date).sort((a, b) => a.timestamp - b.timestamp);
+        const entriesForDate = allEntries.filter(e => e.date === date).sort((a, b) => (a.timestamp && b.timestamp) ? a.timestamp.seconds - b.timestamp.seconds : 0);
         const reportDate = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         let reportContent = `${reportDate}\n\n`;
         entriesForDate.forEach((entry, i) => { reportContent += `${i + 1}. ${entry.party} - ${entry.work}\n`; });
@@ -194,4 +197,5 @@ document.addEventListener('DOMContentLoaded', () => {
     reportModal.addEventListener('click', (e) => { if (e.target === reportModal) reportModal.classList.remove('visible'); });
 
     entryDateInput.value = new Date().toISOString().split('T')[0];
+    showPage('entry'); // Start on the entry page
 });
